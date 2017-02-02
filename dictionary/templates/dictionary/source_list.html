@@ -1,0 +1,9 @@
+{% if sources %}
+    <ul>
+    {% for source in sources %}
+        <li><a href="{% url 'dictionary:source_list' %}">{{ source }}</a> | {{ source.textfile__count }}</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>There is no uploaded sources.</p>
+{% endif %}

@@ -1,0 +1,10 @@
+
+<form method="post" action="{% url 'dictionary:upload_file' %}" enctype="multipart/form-data">{% csrf_token %}
+    <!--<select name="source">-->
+        <!--{% for source in sources %}-->
+            <!--<option value="{{ source.id }}">{{ source }}</option>-->
+        <!--{% endfor %}-->
+    <!--</select>-->
+    {{ form.as_p }}
+    <input type="submit" value="Upload">
+</form>

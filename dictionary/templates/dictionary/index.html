@@ -1,0 +1,10 @@
+{% if words %}
+    <ul>
+    {% for word, meaning in words.items %}
+        <li>{{ word }}</li>
+        <div> {{ meaning }} </div>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>You dictionary is empty. Would you like to add any words?</p>
+{% endif %}

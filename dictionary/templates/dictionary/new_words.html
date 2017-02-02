@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <title>Celery testing</title>
+ <!--<script src="{{ STATIC_URL }}js/jquery-1.10.1.min.js"></script>-->
+    <script
+  src="https://code.jquery.com/jquery-3.1.1.js"
+  integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA="
+  crossorigin="anonymous"></script>
+ <style>
+  .progress {
+   width:50%;
+   background:yellow;
+  }
+  .bar {
+   height:15px;
+   width:0%;
+   background:tomato;
+   text-align:right;
+  }
+ </style>
+</head>
+<body>
+ <h1>Upload new words from file!</h1>
+
+ <div id="container">
+
+  <div class="progress_container">
+
+   <div class="current-task">
+    <h4>{% if task_id %} Task ID: {{ task_id }} {% endif %}</h4>
+   </div>
+
+   <div class="status"></div>
+   {% if task_id %}
+   <div class="progress">
+    <div class="bar"></div>
+   </div>
+   {% endif %}
+  </div>
+
+ </div>
+ {% if task_id %}
+ <script type="text/javascript">
+  jQuery(document).ready(function() {
+
+   // pole state of the current task
+   var PollState = function(task_id) {
+    jQuery.ajax({
+     url: "/dictionary/poll_state",
+     type: "POST",
+     data: "task_id=" + task_id,
+        cache: false,
+    }).done(function(task){
+     console.log(task);
+     if (task.process_percent) {
+      jQuery('.bar').css({'width': task.process_percent + '%'});
+      jQuery('.bar').html( task.process_percent + '%')
+     } else {
+      jQuery('.status').html(task);
+     };
+
+     // create the infinite loop of Ajax calls to check the state
+     // of the current task
+     //PollState(task_id);
+    if (task.process_percent >= 100) {
+      clearTimeout();
+    } else {
+      setTimeout(function(){PollState(task_id);}, 5000);
+    }
+    });
+   }
+
+      PollState('{{ task_id }}');
+  });
+ </script>
+ {% endif %}
+ <!--<script type="text/javascript">-->
+  <!--jQuery('#do-task').click( function() {-->
+   <!--jQuery.ajax({-->
+    <!--url: "do_task",-->
+    <!--data: {},-->
+    <!--success: function(){-->
+     <!--jQuery.ajax({-->
+      <!--url: "",-->
+      <!--context: document.body,-->
+      <!--success: function(s, x) {-->
+       <!--jQuery(this).html(s);-->
+      <!--}-->
+     <!--});-->
+    <!--}-->
+   <!--})-->
+  <!--});-->
+ <!--</script>-->
+
+</body>
+</html>
