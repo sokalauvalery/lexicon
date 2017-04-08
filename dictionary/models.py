@@ -1,10 +1,14 @@
 from django.db import models
 from django.utils import timezone
 
+NEW, LEARN, KNOWN, IGNORE = 0, 1, 2, 3
+WORD_STATUSES = ((NEW, 'new'), (LEARN, 'learn'), (KNOWN, 'known'), (IGNORE, 'ignore'))
+
 
 class Word(models.Model):
     word = models.CharField(max_length=200)
     explore_date = models.DateTimeField('explore date')
+    status = models.IntegerField(choices=WORD_STATUSES, default=NEW)
 
     def __str__(self):
         return self.word

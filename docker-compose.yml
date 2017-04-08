@@ -17,6 +17,11 @@ services:
     image: redis:2.8.19
     hostname: redis
 
+#  # Mongo
+#  mongo:
+#    image: mongo:3.0.4
+#    hostname: mongo
+
   # RabbitMQ
   rabbit:
     hostname: rabbit

@@ -1,6 +1,9 @@
 import re
 from PyDictionary import PyDictionary
 import time
+# from pymongo import MongoClient
+# client = MongoClient('mongo', 27017)
+dictionary = PyDictionary()
 
 
 def get_words(input, known_words=[]):
@@ -12,6 +15,10 @@ def get_words(input, known_words=[]):
             if word not in known_words:
                 new_words.append(word)
     return new_words
+
+
+def get_word_definition(word):
+    return dictionary.meaning(word)
 
 
 def get_words_definition(words, lang=None, interval=1):

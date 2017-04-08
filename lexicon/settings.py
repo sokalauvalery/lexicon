@@ -86,7 +86,11 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_ENV_POSTGRES_PASSWORD', 'postgres'),
         'HOST': os.environ.get('DB_PORT_5432_TCP_ADDR', 'db'),
         'PORT': os.environ.get('DB_PORT_5432_TCP_PORT', ''),
-    }
+    },
+    # 'words': {
+    #     'ENGINE': 'django_mongodb_engine',
+    #     'NAME': 'words_db'
+    # }
 }
 
 
@@ -130,6 +134,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)
+
+#STATIC_ROOT = os.path.join(BASE_DIR, "/Users/sokalauvalery/src/my/lexicon/static")
 
 # Redis
 

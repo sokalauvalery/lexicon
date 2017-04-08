@@ -2,6 +2,7 @@ from celery import shared_task, current_task
 from numpy import random
 from .models import TextFile, Word, Meaning
 from translator import parser
+import json
 
 
 from functools import wraps
@@ -66,9 +67,18 @@ TASK_MAPPING = {
 }
 
 
-#@shared_task
+class SourceStat:
+    def __init__(self):
+        self.total = None
+        self.new = None
+
+class Parser:
+    def __init__(self, source):
+        self.source = source
+        self.total
+
+
 @app.task
-#@update_job
 def get_file_words(file_id):
     file = TextFile.objects.filter(id=file_id)[0]
     known_words = [x.word for x in Word.objects.all()]
@@ -82,11 +92,12 @@ def get_file_words(file_id):
 
     defined_words = []
     for word in parser.get_words_definition(new_words, lang='rus'):
-        print('GOT NEW WORD {}'.format(word) )
+        print('GOT NEW WORD {}'.format(word))
         strword, meaning = word
         print(meaning)
         if meaning:
             newword = Word(word=strword)
+            meaning = json.dumps(meaning)
             newword.save()
             word_meaning = Meaning(word=newword, meaning=meaning)
             word_meaning.save()
