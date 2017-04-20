@@ -1,3 +1,6 @@
+{% extends 'dictionary/base.html' %}
+
+{% block content %}
 Words in your dictionary - {{ total }} <br>
 Waiting to be learn - <a href="{% url 'dictionary:explore_words' %}">{{ new }}</a>
 {% if last_learned %}
@@ -29,3 +32,4 @@ Waiting to be learn - <a href="{% url 'dictionary:explore_words' %}">{{ new }}</
 {% else %}
     <p>You dictionary is empty. Would you like to add any words?</p>
 {% endif %}
+{% endblock content %}

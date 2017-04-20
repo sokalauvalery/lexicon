@@ -1,0 +1,9 @@
+{% if words %}
+    <ul>
+    {% for word in words %}
+        <li>{{ word }}</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>There is no new words in source.</p>
+{% endif %}

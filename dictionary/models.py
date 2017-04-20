@@ -1,14 +1,38 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 NEW, LEARN, KNOWN, IGNORE = 0, 1, 2, 3
-WORD_STATUSES = ((NEW, 'new'), (LEARN, 'learn'), (KNOWN, 'known'), (IGNORE, 'ignore'))
+WORD_STATUSES = ((NEW, 'new'),
+                 (LEARN, 'learn'),
+                 (KNOWN, 'known'),
+                 (IGNORE, 'ignore'))
+
+
+class TextFile(models.Model):
+    #type = models.ForeignKey(Source)
+    user = models.ForeignKey(User)
+    title = models.CharField(max_length=200)
+    file = models.FileField()
+    upload_date = models.DateTimeField('upload date')
+    new_words_count = models.IntegerField(default=0)
+    total_words_count = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.upload_date = timezone.now()
+        return super(TextFile, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
 
 
 class Word(models.Model):
+    user = models.ForeignKey(User)
     word = models.CharField(max_length=200)
     explore_date = models.DateTimeField('explore date')
     status = models.IntegerField(choices=WORD_STATUSES, default=NEW)
+    source = models.ManyToManyField(TextFile)
 
     def __str__(self):
         return self.word
@@ -45,17 +69,6 @@ class Usage(models.Model):
     source = models.ForeignKey(Source)
     usage = models.TextField()
 
-
-class TextFile(models.Model):
-    #type = models.ForeignKey(Source)
-    title = models.CharField(max_length=200)
-    file = models.FileField()
-    upload_date = models.DateTimeField('upload date')
-
-    def save(self, *args, **kwargs):
-        if not self.id:
-            self.upload_date = timezone.now()
-        return super(TextFile, self).save(*args, **kwargs)
 
 
 class Job(models.Model):

@@ -1,9 +1,26 @@
+{% extends 'dictionary/base.html' %}
+
+{% block content %}
 {% if sources %}
-    <ul>
-    {% for source in sources %}
-        <li><a href="{% url 'dictionary:source_list' %}">{{ source }}</a> | {{ source.textfile__count }}</li>
+<table class="table table-striped">
+    {% for source, count in sources.items %}
+        <tr>
+            <td>Upload date</td>
+            <td>Title</td>
+            <td>Total words count</td>
+            <td>New words count</td>
+            <td>Unprocessed words</td>
+        </tr>
+        <tr>
+        <td>{{ source.upload_date }}</td>
+            <td><a href="{% url 'dictionary:source_words' source.title %}">{{ source.title }}</a></td>
+            <td>{{ source.total_words_count }} </td>
+            <td>{{ source.new_words_count }}</td>
+            <td><a href="{% url 'dictionary:explore_words' source.title %}">{{ count }}</a></td>
     {% endfor %}
-    </ul>
+        </tr>
+    </table>
 {% else %}
     <p>There is no uploaded sources.</p>
 {% endif %}
+{% endblock content %}

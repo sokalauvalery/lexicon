@@ -1,10 +1,22 @@
+{% extends 'dictionary/base.html' %}
 
-<form method="post" action="{% url 'dictionary:upload_file' %}" enctype="multipart/form-data">{% csrf_token %}
-    <!--<select name="source">-->
-        <!--{% for source in sources %}-->
-            <!--<option value="{{ source.id }}">{{ source }}</option>-->
-        <!--{% endfor %}-->
-    <!--</select>-->
-    {{ form.as_p }}
-    <input type="submit" value="Upload">
+{% block content %}
+{% load static %}
+ <script type="text/javascript">
+     jQuery(document).ready(function () {
+         document.getElementById("id_file").onchange = function () {
+         document.getElementById("id_title").value = document.getElementById("id_file").files[0].name
+     }
+
+       }
+       )
+
+ </script>
+<form class="form-inline"  method="post" action="{% url 'dictionary:upload_file' %}" enctype="multipart/form-data">{% csrf_token %}
+    <label for="id_file">Choose file to upload: </label>
+    <input class="form-control" id="id_file" name="file" type="file" required="">
+    <label for="id_title">Title:</label>
+    <input class="form-control" id="id_title" maxlength="200" name="title" type="text" required="">
+    <input class="btn btn-primary" type="submit" value="Upload">
 </form>
+{% endblock content %}

@@ -1,0 +1,156 @@
+{% extends 'dictionary/base.html' %}
+
+{% block content %}
+{% load static %}
+
+    <script type="text/javascript">
+        var i = 0;
+        var words = [];
+        var word = null;
+        var meaning = null;
+
+        function display_speech_part(name, res, output_element_id){
+                if (name in res) {
+                    var container_div = document.createElement('div');
+                    container_div.className = 'row';
+                    document.getElementById(output_element_id).appendChild(container_div)
+                    var header_div = document.createElement('div');
+                    header_div.innerHTML = name + ':';
+                    header_div.id = name + '_header';
+                    header_div.className = 'col-md-4';
+                    container_div.appendChild(header_div)
+                    var content_div = document.createElement('div');
+                    content_div.className = 'col-md-4';
+                    container_div.appendChild(content_div);
+                    for (var line in res[name]) {
+                        var noun_div = document.createElement('div');
+                        noun_div.innerHTML = res[name][line];
+                        noun_div.className = 'row';
+                        content_div.appendChild(noun_div)
+                    }
+                }
+        }
+
+
+   var getWordDefinition = function(word) {
+       jQuery.ajax({
+           url: "/dictionary/get_definition/",
+           type: "POST",
+           data: "word=" + word,
+           cache: false,
+           timeout: 5000,
+           success: function (res) {
+               var el = document.getElementById('meaning')
+               while (el.firstChild) el.removeChild(el.firstChild);
+               meaning = res;
+               display_speech_part('Noun', res, 'meaning')
+               display_speech_part('Verb', res, 'meaning')
+               display_speech_part('Adjective', res, 'meaning')
+               display_speech_part('Adverb', res, 'meaning')
+               display_speech_part('Preposition', res, 'meaning')
+               display_speech_part('Conjunctions', res, 'meaning')
+               display_speech_part('Interjections', res, 'meaning')
+           },
+           error: function (res) {
+               console.log('Error')
+               document.getElementById('meaning').innerHTML='Failed to get definition.'
+
+           }
+
+       })
+   }
+       var save_word = function (word, meaning, status) {
+           jQuery.ajax({
+               url: "/dictionary/save_word/",
+               type: "POST",
+               data: {"word": word, "meaning": meaning, "status": 1},
+               cache: false,
+           })
+       }
+
+       function display_word() {
+           //i = 0;
+           if (i < words.length) {
+               word = words.pop();
+               meaning = getWordDefinition(word);
+               document.getElementById('word').innerHTML = word;
+           } else {
+               word = null
+               document.getElementById('word').innerHTML = 'No more new words'
+           }
+
+       }
+
+
+       jQuery(document).ready(function () {
+           words = {{ new_words | safe }};
+           display_word()
+
+       }
+
+       )
+       function skip() {
+           document.getElementById('skip').onclick = function () {
+//               i++;
+               words.unshift(word)
+               console.log(words[i])
+               display_word()
+           }
+       }
+
+       function save() {
+           document.getElementById('save').onclick = function () {
+               // TODO save word with status 'to learn'
+               var meaning_json = JSON.stringify(meaning)
+               console.log(meaning_json)
+               save_word(word, meaning_json, 'learn')
+               display_word()
+           }
+       }
+       function known() {
+           document.getElementById('known').onclick = function () {
+               // TODO save word with status 'to learn'
+               var meaning_json = JSON.stringify(meaning)
+               console.log(meaning_json)
+               save_word(word, meaning_json, 'known')
+               display_word()
+           }
+       }
+
+       function ignore() {
+           document.getElementById('ignore').onclick = function () {
+               // TODO save word with status 'to learn'
+               save_word(word, '', status='ignore')
+               display_word()
+           }
+       }
+
+</script>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-9">
+            <h2 id="word"></h2>
+                <div class="row">
+    <div class="col-md-8">
+      <div class="row" id="meaning">
+          Getting meaning from online sources...
+      </div>
+    </div>
+        </div>
+        </div>
+    <div class="col-md-2">
+        <div class="row"><button id="skip" type="button" class="btn btn-info btn-block" onclick="skip()">Skip</button></div>
+    <div class="row"><button id="save" type="button" class="btn btn-success btn-block" onclick="save()">Save</button></div>
+    <div class="row"><button id="known" type="button" class="btn btn-warning btn-block" onclick="known()">Known</button></div>
+    <div class="row"><button id="ignore" type="button" class="btn btn-danger btn-block" onclick="ignore()">Ignore</button></div>
+    </div>
+    </div>
+
+
+
+</div>
+{% endblock content %}
+
+

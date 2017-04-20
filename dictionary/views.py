@@ -14,14 +14,16 @@ from django.http import HttpResponse
 import json
 from translator import parser
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
+from rest_framework import mixins, viewsets
 
-#bulk_create
 
-
+@login_required()
 def index(request):
-    last_words = Word.objects.filter(status=1).order_by('-explore_date')[:30]
-    total = Word.objects.count()
-    new = Word.objects.filter(status=NEW).count()
+    last_words = Word.objects.filter(status=1).filter(user=request.user).order_by('-explore_date')[:30]
+    total = Word.objects.filter(user=request.user).count()
+    new = Word.objects.filter(status=NEW).filter(user=request.user).count()
     definition = {}
     for word in last_words:
         meaning = Meaning.objects.filter(word=word.id)
@@ -29,19 +31,18 @@ def index(request):
     return render(request, 'dictionary/index.html', context={'words': definition,
                                                              'total': total,
                                                              'new': new,
-                                                             'last_learned': last_words})
+                                                             'last_learned': last_words,
+                                                             'username': request.user})
 
 
-def explore_new_words(request, source_id=None):
-    new_words = Word.objects.filter(status=NEW) if not source_id else Word.objects.filter(status=NEW, source=source_id)
-    #word = words[0]
-    #meaning = parser.get_word_definithins(word)
+@login_required()
+def explore_new_words(request, source_title=None):
+    new_words = Word.objects.filter(status=NEW).filter(user=request.user) if not source_title else Word.objects.filter(status=NEW).filter(user=request.user).filter(source__title=source_title)
     return render(request, 'dictionary/word_explorer.html', context={'new_words': [str(word) for word in new_words]})
 
 
 @csrf_exempt
 def get_definition(request):
-    data = 'Fail'
     if request.is_ajax():
         if 'word' in request.POST.keys() and request.POST['word']:
             data = parser.get_word_definition(request.POST['word'])
@@ -78,13 +79,24 @@ def save_word(request):
 
 
 def source_types(request):
-    last_uploaded_sources = Source.objects.annotate(Count('textfile'))
-    return render(request, 'dictionary/source_list.html', context={'sources': last_uploaded_sources})
+    data = {}
+    last_uploaded_sources = TextFile.objects.filter(user=request.user).order_by('-upload_date')[:30]
+    for source in last_uploaded_sources:
+        data[source] = Word.objects.filter(status=NEW).filter(user=request.user).filter(source__title=source.title).count()
+    return render(request, 'dictionary/source_list.html', context={'sources': data})
 
 
+@login_required()
+def source_words(request, title):
+    source = TextFile.objects.get(title=title)
+    words = Word.objects.filter(source=source, status=2).filter(user=request.user)
+    return render(request, 'dictionary/source.html', context={'words': words,
+                                                             'source': source})
+
+
+@login_required()
 @csrf_exempt
 def upload_file(request):
-    #source_types_all = Source.objects.all()
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
@@ -92,14 +104,21 @@ def upload_file(request):
             #if not source_type:
             #    raise Exception('Invalid source type ' + request.POST['source'])
             #instance = TextFile(type=source_type[0], title=request.POST['title'], file=request.FILES['file'])
-            text_file = TextFile(title=request.POST['title'], file=request.FILES['file'])
+            if request.POST['title']:
+                pass
+            text_file = TextFile(title=request.POST['title'], file=request.FILES['file'], user=request.user)
             text_file.save()
             #job_id = get_file_words.delay(instance.id)
             known_words = [x.word for x in Word.objects.all()]
             words = set(parser.get_words([str(line) for line in text_file.file]))
             print(words)
-            unknown_words = [Word(word=word, explore_date=timezone.now()) for word in words if word not in known_words]
+            unknown_words = [Word(word=word, user=request.user, explore_date=timezone.now()) for word in words if word not in known_words]
             Word.objects.bulk_create(unknown_words)
+            for new_word in unknown_words:
+                new_word.source.add(text_file)
+            text_file.new_words_count = len(unknown_words)
+            text_file.total_words_count = len(words)
+            text_file.save()
             return render(request, 'dictionary/upload_statistics.html', context={'words': unknown_words})
 #            return HttpResponseRedirect(reverse('dictionary:upload_statistics', args=(job_id,)))
 #            return HttpResponseRedirect(reverse('dictionary:new_words', args=(job_id,)))
@@ -108,15 +127,14 @@ def upload_file(request):
     return render(request, 'dictionary/upload.html', {'form': form}) #, 'sources': source_types_all})
 
 
+@login_required()
 def new_words(request, job_id):
     return render(request, 'dictionary/new_words.html', {'task_id': job_id})
 
 
 @csrf_exempt
 def poll_state(request):
-    print("DEBUG")
     """ A view to report the progress to the user """
-    data = 'Fail'
     if request.is_ajax():
         print("Is ajax")
         if 'task_id' in request.POST.keys() and request.POST['task_id']:
@@ -133,8 +151,6 @@ def poll_state(request):
     json_data = json.dumps(data)
     print(json_data)
     return HttpResponse(json_data, content_type='application/json')
-
-from rest_framework import mixins, viewsets
 
 
 class JobViewSet(mixins.CreateModelMixin,
