@@ -21,6 +21,7 @@ urlpatterns = [
     url(r'^router/', include(router.get_urls())),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^get_definition/', views.get_definition, name='get_definition'),
+    url(r'^get_usage/', views.get_usage, name='get_usage'),
     url(r'^save_word/', views.save_word, name='save_word'),
     # TODO: now here using source title instead of id. fix it
     url(r'^source_words/(?P<title>.*)/$', views.source_words, name='source_words'),

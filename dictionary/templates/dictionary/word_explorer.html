@@ -1,4 +1,4 @@
-{% extends 'dictionary/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 {% load static %}
@@ -59,6 +59,39 @@
 
        })
    }
+      var getWordUsage = function(word) {
+       jQuery.ajax({
+           url: "/dictionary/get_usage/",
+           type: "POST",
+           data: "word=" + word,
+           cache: false,
+           timeout: 5000,
+           success: function (res) {
+               var el = document.getElementById('usage')
+               while (el.firstChild) el.removeChild(el.firstChild);
+               usages = res;
+                for (var source in usages){
+                    var header_div = document.createElement('div');
+                    header_div.innerHTML = source;
+                    for (var usage in usages[source]) {
+                        var usage_div = document.createElement('div');
+                        usage_div.innerHTML = usages[source][usage]
+                        header_div.appendChild(usage_div)
+                }
+                }
+                el.appendChild(header_div)
+
+               console.log(usage)
+
+           },
+           error: function (res) {
+               console.log('Error');
+               document.getElementById('usage').innerHTML='Failed to get usage.'
+
+           }
+
+       })
+   }
        var save_word = function (word, meaning, status) {
            jQuery.ajax({
                url: "/dictionary/save_word/",
@@ -73,6 +106,7 @@
            if (i < words.length) {
                word = words.pop();
                meaning = getWordDefinition(word);
+               getWordUsage(word);
                document.getElementById('word').innerHTML = word;
            } else {
                word = null
@@ -134,8 +168,13 @@
             <h2 id="word"></h2>
                 <div class="row">
     <div class="col-md-8">
+        <h3>Definition:</h3>
       <div class="row" id="meaning">
           Getting meaning from online sources...
+      </div>
+        <h3>Usage examples:</h3>
+        <div class="row" id="usage">
+          Getting usage from online sources...
       </div>
     </div>
         </div>

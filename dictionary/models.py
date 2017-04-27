@@ -66,9 +66,17 @@ class Source(models.Model):
 
 class Usage(models.Model):
     word = models.ForeignKey(Word)
-    source = models.ForeignKey(Source)
+    source = models.ForeignKey(TextFile)
     usage = models.TextField()
 
+
+class SubUsage(models.Model):
+    word = models.ForeignKey(Word)
+    source = models.ForeignKey(TextFile)
+    usage = models.TextField()
+    begin_time = models.TextField()
+    end_time = models.TextField()
+    block_id = models.IntegerField()
 
 
 class Job(models.Model):

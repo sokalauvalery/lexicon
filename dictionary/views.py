@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Word, Source, TextFile, Meaning, NEW, KNOWN
+from .models import Word, Source, TextFile, Meaning, NEW, KNOWN, SubUsage
 from .forms import UploadFileForm
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -46,6 +46,27 @@ def get_definition(request):
     if request.is_ajax():
         if 'word' in request.POST.keys() and request.POST['word']:
             data = parser.get_word_definition(request.POST['word'])
+        else:
+            data = 'No word in the request'
+    else:
+        data = 'This is not an ajax request'
+    json_data = json.dumps(data)
+    print(json_data)
+    return HttpResponse(json_data, content_type='application/json')
+
+
+@csrf_exempt
+def get_usage(request):
+    if request.is_ajax():
+        if 'word' in request.POST.keys() and request.POST['word']:
+            word = Word.objects.get(word=request.POST['word'])
+            usages = SubUsage.objects.filter(word=word)
+            data = {}
+            for usage in usages:
+                if usage.source.title not in data:
+                    data[usage.source.title] = [usage.usage]
+                else:
+                    data[usage.source.title].append(usage.usage)
         else:
             data = 'No word in the request'
     else:
@@ -110,8 +131,11 @@ def upload_file(request):
             text_file.save()
             #job_id = get_file_words.delay(instance.id)
             known_words = [x.word for x in Word.objects.all()]
-            words = set(parser.get_words([str(line) for line in text_file.file]))
-            print(words)
+            with open(text_file.file.path) as f:
+                sub_parser = parser.SrtSubParser(f)
+                words = sub_parser.get_words()
+            #words = set(parser.get_words([str(line) for line in text_file.file]))
+            #print(words)
             unknown_words = [Word(word=word, user=request.user, explore_date=timezone.now()) for word in words if word not in known_words]
             Word.objects.bulk_create(unknown_words)
             for new_word in unknown_words:
@@ -119,6 +143,18 @@ def upload_file(request):
             text_file.new_words_count = len(unknown_words)
             text_file.total_words_count = len(words)
             text_file.save()
+            # Save usages
+            usages_to_save = []
+            for word in unknown_words:
+                for usage in words[word.word]:
+                    usages_to_save.append(SubUsage(word=word,
+                                                   source=text_file,
+                                                   usage=usage.line,
+                                                   begin_time=usage.begin_time,
+                                                   end_time = usage.end_time,
+                                                   block_id= usage.block_id
+                    ))
+            SubUsage.objects.bulk_create(usages_to_save)
             return render(request, 'dictionary/upload_statistics.html', context={'words': unknown_words})
 #            return HttpResponseRedirect(reverse('dictionary:upload_statistics', args=(job_id,)))
 #            return HttpResponseRedirect(reverse('dictionary:new_words', args=(job_id,)))

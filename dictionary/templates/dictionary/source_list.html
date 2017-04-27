@@ -1,16 +1,16 @@
-{% extends 'dictionary/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 {% if sources %}
 <table class="table table-striped">
-    {% for source, count in sources.items %}
-        <tr>
+            <tr>
             <td>Upload date</td>
             <td>Title</td>
             <td>Total words count</td>
             <td>New words count</td>
             <td>Unprocessed words</td>
         </tr>
+    {% for source, count in sources.items %}
         <tr>
         <td>{{ source.upload_date }}</td>
             <td><a href="{% url 'dictionary:source_words' source.title %}">{{ source.title }}</a></td>

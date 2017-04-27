@@ -12,12 +12,13 @@
       <li class="active"><a href="{% url 'dictionary:home' %}">Home</a></li>
       <li><a href="{% url 'dictionary:upload_file' %}">Upload file</a></li>
       <li><a href="{% url 'dictionary:sources' %}">View sources</a></li>
-        <li class=".pull-right"><a href="{% url 'logout' %}">Logout</a></li>
-      <!--<li><a href="#">Page 3</a></li>-->
     </ul>
-      <div>
-          <p>{{ username }}</p>
-      </div>
+      <ul class="nav navbar-nav navbar-right">
+          {% if username %}
+                <li><a href="#"><span class="glyphicon glyphicon-user"></span> {{ username }}</a></li>
+          {% endif %}
+      <li><a href="{% url 'logout' %}"><span class="glyphicon glyphicon-log-in"></span> Logout</a></li>
+    </ul>
   </div>
 </nav>
 
