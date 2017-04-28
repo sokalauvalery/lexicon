@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.core.files.storage import default_storage
 
 NEW, LEARN, KNOWN, IGNORE = 0, 1, 2, 3
 WORD_STATUSES = ((NEW, 'new'),
@@ -9,14 +10,20 @@ WORD_STATUSES = ((NEW, 'new'),
                  (IGNORE, 'ignore'))
 
 
+def user_directory_path(instance, filename):
+    # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+    return 'user_{0}/{1}'.format(instance.user.id, filename)
+
 class TextFile(models.Model):
     #type = models.ForeignKey(Source)
     user = models.ForeignKey(User)
     title = models.CharField(max_length=200)
-    file = models.FileField()
+    file = models.FileField(upload_to=user_directory_path)
     upload_date = models.DateTimeField('upload date')
     new_words_count = models.IntegerField(default=0)
     total_words_count = models.IntegerField(default=0)
+
+
 
     def save(self, *args, **kwargs):
         if not self.id:

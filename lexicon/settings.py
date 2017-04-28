@@ -56,6 +56,8 @@ ROOT_URLCONF = 'lexicon.urls'
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
+MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'file_storage')
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
