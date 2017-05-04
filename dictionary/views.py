@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Word, Source, TextFile, Meaning, NEW, KNOWN, SubUsage
+from .models import Word, Source, TextFile, Meaning, NEW, KNOWN, SubUsage, LEARN
 from .forms import UploadFileForm
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -80,39 +80,41 @@ def get_usage(request):
 def save_word(request):
     expected_fields = ['word', 'meaning', 'status']
     has_all_data = True
-    print(request.POST.keys())
-    print('Save word!')
     if request.is_ajax():
-        for field in expected_fields:
-            if field not in request.POST.keys() or request.POST[field] is None:
-                print('Cannot save word. Missing requared data. Post body: ' + str(request.POST))
-                has_all_data =False
-        if has_all_data:
-            word = Word.objects.get(word=request.POST['word'])
-            word.status = request.POST['status']
-            word.save()
-            if request.POST['status'] == 'learn':
-                meaning = Meaning(word=request.POST['word'], meaning=request.POST['meaning'])
-                meaning.save()
+        # for field in expected_fields:
+            # if field not in request.POST.keys() or request.POST[field] is None:
+            #     print('Cannot save word. Missing requared data. Post body: ' + str(request.POST))
+            #     has_all_data =False
+        # if has_all_data:
+        word = Word.objects.get(word=request.POST['word'])
+        word.status = request.POST['status']
+        word.save()
+        # if request.POST['status'] == 'learn':
+        #     meaning = Meaning(word=request.POST['word'], meaning=request.POST['meaning'])
+        #     meaning.save()
     else:
         data = 'This is not an ajax request'
     return HttpResponse({'Status': 'Ok'}, content_type='application/json')
 
 
+@login_required()
 def source_types(request):
-    data = {}
+    data = []
     last_uploaded_sources = TextFile.objects.filter(user=request.user).order_by('-upload_date')[:30]
     for source in last_uploaded_sources:
-        data[source] = Word.objects.filter(status=NEW).filter(user=request.user).filter(source__title=source.title).count()
+        unprocessed = Word.objects.filter(status=NEW).filter(user=request.user).filter(source__title=source.title).count()
+        to_learn = Word.objects.filter(status=LEARN).filter(user=request.user).filter(source__title=source.title).count()
+        data.append((source, unprocessed, to_learn))
     return render(request, 'dictionary/source_list.html', context={'sources': data})
 
 
 @login_required()
-def source_words(request, title):
+def source_words(request, title, status_filter=-1):
     source = TextFile.objects.get(title=title)
-    words = Word.objects.filter(source=source, status=2).filter(user=request.user)
-    return render(request, 'dictionary/source.html', context={'words': words,
-                                                             'source': source})
+    words = Word.objects.filter(source=source).filter(user=request.user)
+    return render(request, 'dictionary/source.html', context={'words': enumerate(words),
+                                                              'source': source,
+                                                              'word_status_filter': status_filter})
 
 
 @login_required()
@@ -130,12 +132,10 @@ def upload_file(request):
             text_file = TextFile(title=request.POST['title'], file=request.FILES['file'], user=request.user)
             text_file.save()
             #job_id = get_file_words.delay(instance.id)
-            known_words = [x.word for x in Word.objects.all()]
+            known_words = [x.word for x in Word.objects.filter(user=request.user)]
             with open(text_file.file.path) as f:
                 sub_parser = parser.SrtSubParser(f)
                 words = sub_parser.get_words()
-            #words = set(parser.get_words([str(line) for line in text_file.file]))
-            #print(words)
             unknown_words = [Word(word=word, user=request.user, explore_date=timezone.now()) for word in words if word not in known_words]
             Word.objects.bulk_create(unknown_words)
             for new_word in unknown_words:
@@ -151,13 +151,11 @@ def upload_file(request):
                                                    source=text_file,
                                                    usage=usage.line,
                                                    begin_time=usage.begin_time,
-                                                   end_time = usage.end_time,
-                                                   block_id= usage.block_id
+                                                   end_time=usage.end_time,
+                                                   block_id=usage.block_id
                     ))
             SubUsage.objects.bulk_create(usages_to_save)
             return render(request, 'dictionary/upload_statistics.html', context={'words': unknown_words})
-#            return HttpResponseRedirect(reverse('dictionary:upload_statistics', args=(job_id,)))
-#            return HttpResponseRedirect(reverse('dictionary:new_words', args=(job_id,)))
     else:
         form = UploadFileForm()
     return render(request, 'dictionary/upload.html', {'form': form}) #, 'sources': source_types_all})

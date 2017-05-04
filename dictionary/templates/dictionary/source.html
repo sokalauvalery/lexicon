@@ -1,9 +1,97 @@
+{% extends 'base.html' %}
+
+{% block content %}
 {% if words %}
-    <ul>
-    {% for word in words %}
-        <li>{{ word }}</li>
+<head>
+<script type="text/javascript">
+window.onload = function () {
+    console.log('Onload func')
+    var filter_status = {{ word_status_filter }}
+    console.log(filter_status)
+    if (filter_status >= 0){
+        filter_words(filter_status)
+        document.getElementById('filters').style.display = 'none';
+    }
+};
+var save_word = function (word, status) {
+   jQuery.ajax({
+       url: "/dictionary/save_word/",
+       type: "POST",
+       data: {"word": word, "status": status},
+       cache: false
+   })
+};
+
+var filter_words = function (status) {
+    var i = 0;
+    while (document.getElementById('status_' + i) != null){
+        var element = document.getElementById('status_' + i);
+
+        if (parseInt(element.innerHTML) != parseInt(status) && parseInt(status)>=0) {
+            element.parentNode.style.display='none';
+        } else {
+            element.parentNode.style.display='';
+        }
+        i+=1;
+    }
+};
+
+var change_word_status = function(word, status, id) {
+    save_word(word, status);
+    var status_td = document.getElementById('status_' + id)
+    status_td.innerHTML = status
+}
+
+</script>
+</head>
+<div id="filters">
+    <h4>Filters: </h4>
+<div class="radio-inline">
+  <label>
+    <input type="radio" name="optionsRadios" id="optionsRadios1" value="-1" onclick="filter_words(-1)" checked>
+    All
+  </label>
+</div>
+<div class="radio-inline">
+  <label>
+    <input type="radio" name="optionsRadios" id="optionsRadios2" value="0" onclick="filter_words(0)">
+    New
+  </label>
+</div>
+<div class="radio-inline">
+  <label>
+    <input type="radio" name="optionsRadios" id="optionsRadios3" value="2" onclick="filter_words(2)">
+    Known
+  </label>
+</div>
+<div class="radio-inline">
+  <label>
+    <input type="radio" name="optionsRadios" id="optionsRadios3" value="1" onclick="filter_words(1)">
+    To learn
+  </label>
+</div>
+</div>
+
+
+<table class="table table-striped">
+            <tr>
+            <td>Word</td>
+            <td>Status</td>
+            <td>Actions</td>
+        </tr>
+    {% for i, word in words %}
+        <tr id="{{ i }}">
+            <td id="word_{{ i }}" name="word">{{ word.word }}</td>
+            <td id="status_{{ i }}" name="status"> {{ word.status }}</td>
+            <td>
+                <a id="save" onclick="change_word_status('{{ word.word }}', 1, {{ i }})" >Save</a>
+                <a id="known"  onclick="change_word_status('{{ word.word }}', 2, {{ i }})">Known</a>
+                <a id="ignore" onclick="change_word_status('{{ word.word }}', 3, {{ i }})">Ignore</a>
+            </td>
     {% endfor %}
-    </ul>
+        </tr>
+    </table>
 {% else %}
     <p>There is no new words in source.</p>
 {% endif %}
+{% endblock content %}

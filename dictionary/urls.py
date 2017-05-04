@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^get_usage/', views.get_usage, name='get_usage'),
     url(r'^save_word/', views.save_word, name='save_word'),
     # TODO: now here using source title instead of id. fix it
+    url(r'^source_words/(?P<title>.*)/(?P<status_filter>.*)/$', views.source_words, name='source_words'),
     url(r'^source_words/(?P<title>.*)/$', views.source_words, name='source_words'),
 
 ]

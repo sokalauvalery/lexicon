@@ -14,6 +14,7 @@ def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
     return 'user_{0}/{1}'.format(instance.user.id, filename)
 
+
 class TextFile(models.Model):
     #type = models.ForeignKey(Source)
     user = models.ForeignKey(User)
@@ -22,8 +23,6 @@ class TextFile(models.Model):
     upload_date = models.DateTimeField('upload date')
     new_words_count = models.IntegerField(default=0)
     total_words_count = models.IntegerField(default=0)
-
-
 
     def save(self, *args, **kwargs):
         if not self.id:

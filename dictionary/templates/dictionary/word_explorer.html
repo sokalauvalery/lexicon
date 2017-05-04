@@ -96,20 +96,21 @@
            jQuery.ajax({
                url: "/dictionary/save_word/",
                type: "POST",
-               data: {"word": word, "meaning": meaning, "status": 1},
-               cache: false,
+               data: {"word": word, "meaning": meaning, "status": status},
+               cache: false
            })
-       }
+       };
 
        function display_word() {
-           //i = 0;
            if (i < words.length) {
-               word = words.pop();
+//               word = words.pop();
+               word = words[i];
+               i ++;
                meaning = getWordDefinition(word);
                getWordUsage(word);
                document.getElementById('word').innerHTML = word;
            } else {
-               word = null
+               word = null;
                document.getElementById('word').innerHTML = 'No more new words'
            }
 
@@ -126,7 +127,7 @@
        function skip() {
            document.getElementById('skip').onclick = function () {
 //               i++;
-               words.unshift(word)
+               //words.unshift(word)
                console.log(words[i])
                display_word()
            }
@@ -135,9 +136,9 @@
        function save() {
            document.getElementById('save').onclick = function () {
                // TODO save word with status 'to learn'
-               var meaning_json = JSON.stringify(meaning)
-               console.log(meaning_json)
-               save_word(word, meaning_json, 'learn')
+               var meaning_json = JSON.stringify(meaning);
+               console.log(meaning_json);
+               save_word(word, meaning_json, status=1);
                display_word()
            }
        }
@@ -146,7 +147,7 @@
                // TODO save word with status 'to learn'
                var meaning_json = JSON.stringify(meaning)
                console.log(meaning_json)
-               save_word(word, meaning_json, 'known')
+               save_word(word, meaning_json, status=2)
                display_word()
            }
        }
@@ -154,7 +155,13 @@
        function ignore() {
            document.getElementById('ignore').onclick = function () {
                // TODO save word with status 'to learn'
-               save_word(word, '', status='ignore')
+               save_word(word, '', status=3);
+               display_word()
+           }
+       }
+       function back() {
+           document.getElementById('back').onclick = function () {
+                i -= 2;
                display_word()
            }
        }
@@ -184,6 +191,7 @@
     <div class="row"><button id="save" type="button" class="btn btn-success btn-block" onclick="save()">Save</button></div>
     <div class="row"><button id="known" type="button" class="btn btn-warning btn-block" onclick="known()">Known</button></div>
     <div class="row"><button id="ignore" type="button" class="btn btn-danger btn-block" onclick="ignore()">Ignore</button></div>
+    <div class="row"><button id="back" type="button" class="btn btn-primary btn-block" onclick="back()">Previous word</button></div>
     </div>
     </div>
 
