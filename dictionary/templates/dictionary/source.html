@@ -13,7 +13,9 @@ window.onload = function () {
         document.getElementById('filters').style.display = 'none';
     }
 };
+
 var save_word = function (word, status) {
+    console.log(status)
    jQuery.ajax({
        url: "/dictionary/save_word/",
        type: "POST",
@@ -40,7 +42,117 @@ var change_word_status = function(word, status, id) {
     save_word(word, status);
     var status_td = document.getElementById('status_' + id)
     status_td.innerHTML = status
-}
+};
+
+var details_toggle = function (id) {
+    var details_div = document.getElementsByName('details')[parseInt(id)];
+    if (details_div.style.display == '') {
+        details_div.style.display='none';
+    } else {
+        details_div.style.display='';
+        var word = document.getElementsByName('word')[id].innerText;
+        console.log(word);
+        getWordUsage(word, 'usage_' + id);
+        getWordDefinition(word, 'meaning_' + id);
+    }
+
+
+};
+
+var highlight_word = function (highlighted_mode, id){
+    var word = document.getElementsByName('word_link')[id];
+    if (highlighted_mode) {
+        word.style.color = 'red';
+        word.style.fontWeight="bold";
+    } else {
+        word.style.color = '';
+        word.style.fontWeight="normal";
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////
+       function display_speech_part(name, res, output_element_id){
+                if (name in res) {
+                    var container_div = document.createElement('div');
+                    container_div.className = 'row';
+                    document.getElementById(output_element_id).appendChild(container_div)
+                    var header_div = document.createElement('div');
+                    header_div.innerHTML = name + ':';
+                    header_div.id = name + '_header';
+                    header_div.className = 'col-md-4';
+                    container_div.appendChild(header_div)
+                    var content_div = document.createElement('div');
+                    content_div.className = 'col-md-4';
+                    container_div.appendChild(content_div);
+                    for (var line in res[name]) {
+                        var noun_div = document.createElement('div');
+                        noun_div.innerHTML = res[name][line];
+                        noun_div.className = 'row';
+                        content_div.appendChild(noun_div)
+                    }
+                }
+        }
+       var getWordDefinition = function(word, output_div_id) {
+       jQuery.ajax({
+           url: "/dictionary/get_definition/",
+           type: "POST",
+           data: "word=" + word,
+           cache: false,
+           timeout: 5000,
+           success: function (res) {
+               var el = document.getElementById(output_div_id);
+               while (el.firstChild) el.removeChild(el.firstChild);
+               meaning = res;
+               display_speech_part('Noun', res, output_div_id);
+               display_speech_part('Verb', res, output_div_id);
+               display_speech_part('Adjective', res, output_div_id);
+               display_speech_part('Adverb', res, output_div_id);
+               display_speech_part('Preposition', res, output_div_id);
+               display_speech_part('Conjunctions', res, output_div_id);
+               display_speech_part('Interjections', res, output_div_id)
+           },
+           error: function (res) {
+               console.log('Error')
+               document.getElementById('meaning').innerHTML='Failed to get definition.'
+
+           }
+
+       })
+   };
+       var getWordUsage = function(word, output_element_id) {
+       jQuery.ajax({
+           url: "/dictionary/get_usage/",
+           type: "POST",
+           data: "word=" + word,
+           cache: false,
+           timeout: 5000,
+           success: function (res) {
+               var el = document.getElementById(output_element_id)
+               while (el.firstChild) el.removeChild(el.firstChild);
+               usages = res;
+                for (var source in usages){
+                    var header_div = document.createElement('div');
+                    header_div.innerHTML = source;
+                    for (var usage in usages[source]) {
+                        var usage_div = document.createElement('div');
+                        usage_div.innerHTML = usages[source][usage]
+                        header_div.appendChild(usage_div)
+                }
+                }
+                el.appendChild(header_div)
+
+               console.log(usage)
+
+           },
+           error: function (res) {
+               console.log('Error');
+               document.getElementById('usage').innerHTML='Failed to get usage.'
+
+           }
+
+       })
+   }
+/////////////////////////////////////////////////////////////////////////////
 
 </script>
 </head>
@@ -72,25 +184,43 @@ var change_word_status = function(word, status, id) {
 </div>
 </div>
 
-
-<table class="table table-striped">
-            <tr>
-            <td>Word</td>
-            <td>Status</td>
-            <td>Actions</td>
-        </tr>
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">Word</div>
+        <div class="col-md-2">Status</div>
+        <div class="col-md-4">Actions</div>
+    </div>
     {% for i, word in words %}
-        <tr id="{{ i }}">
-            <td id="word_{{ i }}" name="word">{{ word.word }}</td>
-            <td id="status_{{ i }}" name="status"> {{ word.status }}</td>
-            <td>
-                <a id="save" onclick="change_word_status('{{ word.word }}', 1, {{ i }})" >Save</a>
-                <a id="known"  onclick="change_word_status('{{ word.word }}', 2, {{ i }})">Known</a>
-                <a id="ignore" onclick="change_word_status('{{ word.word }}', 3, {{ i }})">Ignore</a>
-            </td>
+    <div class="row" id="{{ i }}" onmouseover="highlight_word(true, {{ i }} )" onmouseout="highlight_word(false, {{ i }} )">
+        <div id="word_{{ i }}" name="word" class="col-md-4">
+            <a name="word_link" id="{{ i }}" onclick="details_toggle( {{ i }} )" > {{ word.word }} </a>
+        </div>
+        <div id="status_{{ i }}" name="status" class="col-md-2">{{ word.status }}</div>
+        <div class="container">
+        <div class="col-md-1">
+            <a id="save" onclick="change_word_status('{{ word.word }}', 1, {{ i }})" >Save</a>
+        </div>
+        <div class="col-md-1">
+            <a id="known"  onclick="change_word_status('{{ word.word }}', 2, {{ i }})">Known</a>
+        </div>
+        <div class="col-md-1">
+            <a id="ignore" onclick="change_word_status('{{ word.word }}', 3, {{ i }})">Ignore</a>
+        </div>
+            </div>
+    </div>
+    <div name="details" id="{{ i }}" class="row" style="display: none">
+        <h3>Definition:</h3>
+        <div name="meaning" id="meaning_{{ i }}">
+            Getting meaning from online sources...
+        </div>
+        <h3>Usage examples:</h3>
+        <div  name="usage" id="usage_{{ i }}">
+            Getting usage from online sources...
+        </div>
+    </div>
     {% endfor %}
-        </tr>
-    </table>
+</div>
+
 {% else %}
     <p>There is no new words in source.</p>
 {% endif %}
