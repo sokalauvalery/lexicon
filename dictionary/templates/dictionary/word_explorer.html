@@ -165,6 +165,34 @@
                display_word()
            }
        }
+       // TODO: configuration via UI. Remove hardcoded defaults to User config
+       document.addEventListener("keyup", function(event) {
+            console.log(event.keyCode)
+            event.preventDefault();
+            switch (event.keyCode){
+                case (83): {
+                    document.getElementById("save").click();
+                    break;
+                }
+                case (75): {
+                    document.getElementById("known").click();
+                    break;
+                }
+                case (73): {
+                    document.getElementById("ignore").click();
+                    break;
+                }
+                case (37): {
+                    document.getElementById("back").click();
+                    break;
+                }
+                case (39): {
+                    document.getElementById("skip").click();
+                    break;
+                }
+            }
+        });
+
 
 </script>
 
