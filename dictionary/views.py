@@ -36,8 +36,8 @@ def index(request):
 
 
 @login_required()
-def explore_new_words(request, source_title=None):
-    new_words = Word.objects.filter(status=NEW).filter(user=request.user) if not source_title else Word.objects.filter(status=NEW).filter(user=request.user).filter(source__title=source_title)
+def explore_new_words(request, source_id=None):
+    new_words = Word.objects.filter(status=NEW).filter(user=request.user) if not source_id else Word.objects.filter(status=NEW).filter(user=request.user).filter(source__id=source_id)
     return render(request, 'dictionary/word_explorer.html', context={'new_words': [str(word) for word in new_words]})
 
 
@@ -102,15 +102,15 @@ def source_types(request):
     data = []
     last_uploaded_sources = TextFile.objects.filter(user=request.user).order_by('-upload_date')[:30]
     for source in last_uploaded_sources:
-        unprocessed = Word.objects.filter(status=NEW).filter(user=request.user).filter(source__title=source.title).count()
-        to_learn = Word.objects.filter(status=LEARN).filter(user=request.user).filter(source__title=source.title).count()
+        unprocessed = Word.objects.filter(status=NEW).filter(user=request.user).filter(source__id=source.id).count()
+        to_learn = Word.objects.filter(status=LEARN).filter(user=request.user).filter(source__id=source.id).count()
         data.append((source, unprocessed, to_learn))
     return render(request, 'dictionary/source_list.html', context={'sources': data})
 
 
 @login_required()
-def source_words(request, title, status_filter=-1):
-    source = TextFile.objects.get(title=title)
+def source_words(request, source_id, status_filter=-1):
+    source = TextFile.objects.get(id=source_id)
     words = Word.objects.filter(source=source).filter(user=request.user)
     return render(request, 'dictionary/source.html', context={'words': enumerate(words),
                                                               'source': source,

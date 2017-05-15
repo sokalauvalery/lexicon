@@ -14,11 +14,11 @@
     {% for source, unprocessed, to_learn in sources %}
         <tr>
         <td>{{ source.upload_date }}</td>
-            <td><a href="{% url 'dictionary:source_words' source.title %}">{{ source.title }}</a></td>
+            <td><a href="{% url 'dictionary:source_words' source.id %}">{{ source.title }}</a></td>
             <td>{{ source.total_words_count }} </td>
             <td>{{ source.new_words_count }}</td>
-            <td><a href="{% url 'dictionary:explore_words' source.title %}">{{ unprocessed }}</a></td>
-            <td><a href="{% url 'dictionary:source_words' source.title 1 %}">{{ to_learn }}</a></td>
+            <td><a href="{% url 'dictionary:explore_words' source.id %}">{{ unprocessed }}</a></td>
+            <td><a href="{% url 'dictionary:source_words' source.id 1 %}">{{ to_learn }}</a></td>
     {% endfor %}
         </tr>
     </table>
