@@ -1,67 +1,20 @@
 {% extends 'base.html' %}
-
+{% load static %}
+{% block head %}
+    <script src="{% static 'dictionary_app.js' %}"></script>
+{% endblock %}
 {% block content %}
 {% load static %}
-
-    <script type="text/javascript">
+    <script type="text/javascript" >
         var i = 0;
         var words = [];
         var word = null;
         var meaning = null;
+        var translation = null;
 
-        function display_speech_part(name, res, output_element_id){
-                if (name in res) {
-                    var container_div = document.createElement('div');
-                    container_div.className = 'row';
-                    document.getElementById(output_element_id).appendChild(container_div)
-                    var header_div = document.createElement('div');
-                    header_div.innerHTML = name + ':';
-                    header_div.id = name + '_header';
-                    header_div.className = 'col-md-4';
-                    container_div.appendChild(header_div)
-                    var content_div = document.createElement('div');
-                    content_div.className = 'col-md-4';
-                    container_div.appendChild(content_div);
-                    for (var line in res[name]) {
-                        var noun_div = document.createElement('div');
-                        noun_div.innerHTML = res[name][line];
-                        noun_div.className = 'row';
-                        content_div.appendChild(noun_div)
-                    }
-                }
-        }
-
-
-   var getWordDefinition = function(word) {
+       var getWordSynonym = function(word) {
        jQuery.ajax({
-           url: "/dictionary/get_definition/",
-           type: "POST",
-           data: "word=" + word,
-           cache: false,
-           timeout: 5000,
-           success: function (res) {
-               var el = document.getElementById('meaning')
-               while (el.firstChild) el.removeChild(el.firstChild);
-               meaning = res;
-               display_speech_part('Noun', res, 'meaning')
-               display_speech_part('Verb', res, 'meaning')
-               display_speech_part('Adjective', res, 'meaning')
-               display_speech_part('Adverb', res, 'meaning')
-               display_speech_part('Preposition', res, 'meaning')
-               display_speech_part('Conjunctions', res, 'meaning')
-               display_speech_part('Interjections', res, 'meaning')
-           },
-           error: function (res) {
-               console.log('Error')
-               document.getElementById('meaning').innerHTML='Failed to get definition.'
-
-           }
-
-       })
-   }
-      var getWordUsage = function(word) {
-       jQuery.ajax({
-           url: "/dictionary/get_usage/",
+           url: "/dictionary/get_synonym/",
            type: "POST",
            data: "word=" + word,
            cache: false,
@@ -91,23 +44,18 @@
            }
 
        })
-   }
-       var save_word = function (word, meaning, status) {
-           jQuery.ajax({
-               url: "/dictionary/save_word/",
-               type: "POST",
-               data: {"word": word, "meaning": meaning, "status": status},
-               cache: false
-           })
        };
 
        function display_word() {
            if (i < words.length) {
-//               word = words.pop();
                word = words[i];
                i ++;
-               meaning = getWordDefinition(word);
-               getWordUsage(word);
+               get_server_word_info('get_definition', word, display_word_definition, 'meaning');
+               get_server_word_info('get_usage', word, display_word_usage, 'usage');
+               get_server_word_info('translate', word, display_word_translation, 'translate');
+//               meaning = display_word_definition('meaning', word);
+//               translation = translateWord(word);
+//               display_word_usage('usage', word)
                document.getElementById('word').innerHTML = word;
            } else {
                word = null;
@@ -116,14 +64,12 @@
 
        }
 
-
        jQuery(document).ready(function () {
            words = {{ new_words | safe }};
            display_word()
 
-       }
+       });
 
-       )
        function skip() {
            document.getElementById('skip').onclick = function () {
 //               i++;
@@ -192,8 +138,6 @@
                 }
             }
         });
-
-
 </script>
 
 
@@ -210,6 +154,10 @@
         <h3>Usage examples:</h3>
         <div class="row" id="usage">
           Getting usage from online sources...
+      </div>
+        <h3>Translation:</h3>
+        <div class="row" id="translate">
+          Getting translate from online sources...
       </div>
     </div>
         </div>
